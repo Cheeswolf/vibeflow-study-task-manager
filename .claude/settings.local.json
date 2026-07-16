@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m app.main)",
+      "Bash(.venv/Scripts/python -c \"import tkinter; print\\('tkinter OK'\\)\")",
+      "Bash(.venv/Scripts/python -c \"import app; print\\('app OK'\\)\")",
+      "Bash(.venv/Scripts/python -c \"from app.main import main; print\\('import OK'\\)\")",
+      "Bash(python -c \"import sys; print\\(sys.executable\\); print\\(sys.version\\)\")",
+      "Bash(where python *)",
+      "Bash(/c/Users/15445/AppData/Local/Programs/Python/Python310/python -c \"import tkinter; print\\('tkinter OK'\\)\")",
+      "Bash(/c/Users/15445/AppData/Local/Microsoft/WindowsApps/python -c \"import tkinter\")",
+      "Bash(cmd.exe /c \"where python\")",
+      "Bash(powershell.exe -Command 'Get-Command python -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source')",
+      "Bash(cmd.exe /c 'dir \"C:\\\\Users\\\\15445\\\\AppData\\\\Local\\\\Microsoft\\\\WindowsApps\\\\python*\" 2>&1')",
+      "Bash(powershell.exe -Command ' *)",
+      "Bash(python -c \"import tkinter; print\\('tkinter OK'\\)\")",
+      "Bash(python -c \"from app.main import main; print\\('import OK'\\)\")",
+      "Bash(.venv/Scripts/python -m pip --version)",
+      "Bash(.venv/Scripts/python -m pip list)",
+      "Bash(powershell.exe -Command '$PROFILE.CurrentUserCurrentHost')"
+    ]
+  }
+}
