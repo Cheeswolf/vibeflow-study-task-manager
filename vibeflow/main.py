@@ -3,8 +3,8 @@ from __future__ import annotations
 import tkinter as tk
 from tkinter import messagebox, ttk
 
-from app.db import TaskRepository
-from app.services import TaskService
+from vibeflow.db import TaskRepository
+from vibeflow.services import TaskService
 
 
 class VibeFlowApp:

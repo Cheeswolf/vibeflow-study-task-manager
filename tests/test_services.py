@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from app.db import TaskRepository
-from app.services import TaskService
+from vibeflow.db import TaskRepository
+from vibeflow.services import TaskService
 
 
 @pytest.fixture

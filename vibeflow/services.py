@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from app.db import TaskRepository
-from app.models import Task
+from vibeflow.db import TaskRepository
+from vibeflow.models import Task
 
 
 class TaskService:

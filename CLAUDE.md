@@ -38,6 +38,6 @@ V0.1 MVP
 - created_at
 
 ## 验收标准
-- 程序可通过 `python -m app.main` 启动。
+- 程序可通过 `python -m vibeflow.main` 启动。
 - 数据重启后仍然存在。
 - 核心服务测试可通过 `pytest`。

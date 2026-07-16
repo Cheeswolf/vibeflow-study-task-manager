@@ -4,7 +4,7 @@ import sqlite3
 from pathlib import Path
 from typing import Iterable
 
-from app.models import Task
+from vibeflow.models import Task
 
 
 class TaskRepository:

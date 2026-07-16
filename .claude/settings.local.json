@@ -17,7 +17,10 @@
       "Bash(python -c \"from app.main import main; print\\('import OK'\\)\")",
       "Bash(.venv/Scripts/python -m pip --version)",
       "Bash(.venv/Scripts/python -m pip list)",
-      "Bash(powershell.exe -Command '$PROFILE.CurrentUserCurrentHost')"
+      "Bash(powershell.exe -Command '$PROFILE.CurrentUserCurrentHost')",
+      "Bash(python -m pytest tests/ -v)",
+      "Bash(python -m pip show app)",
+      "Bash(python -c \"import sys; print\\([p for p in sys.path if 'site-packages' in p]\\)\")"
     ]
   }
 }

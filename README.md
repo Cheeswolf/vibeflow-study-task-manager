@@ -22,7 +22,7 @@
 ## 启动项目
 
 ```bash
-python -m app.main
+python -m vibeflow.main
 ```
 
 ## 运行测试
