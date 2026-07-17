@@ -46,6 +46,24 @@ class TaskService:
         new_status = "completed" if current.status == "pending" else "pending"
         return self.repository.update_status(task_id, new_status)
 
+    def update_task(
+        self, task_id: int, title: str, course: str = "", due_date: str = ""
+    ) -> Task:
+        title = title.strip()
+        course = course.strip()
+        due_date = due_date.strip()
+
+        if not title:
+            raise ValueError("任务标题不能为空")
+
+        if due_date:
+            try:
+                datetime.strptime(due_date, "%Y-%m-%d")
+            except ValueError as exc:
+                raise ValueError("截止日期必须使用 YYYY-MM-DD 格式") from exc
+
+        return self.repository.update(task_id, title, course, due_date)
+
     def delete_task(self, task_id: int) -> None:
         self.repository.delete(task_id)
 

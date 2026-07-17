@@ -134,9 +134,15 @@ class VibeFlowApp:
 
         ttk.Button(
             actions,
+            text="编辑任务",
+            command=self.edit_selected_task,
+        ).pack(side=tk.LEFT, padx=8)
+
+        ttk.Button(
+            actions,
             text="删除任务",
             command=self.delete_selected_task,
-        ).pack(side=tk.LEFT, padx=8)
+        ).pack(side=tk.LEFT)
 
         ttk.Button(
             actions,
@@ -187,6 +193,14 @@ class VibeFlowApp:
             f"全部 {stats['total']}｜待完成 {stats['pending']}｜已完成 {stats['completed']}"
         )
 
+    def _get_selected_task_values(self) -> tuple[int, str, str, str] | None:
+        selection = self.tree.selection()
+        if not selection:
+            messagebox.showwarning("未选择任务", "请先选择一条任务")
+            return None
+        values = self.tree.item(selection[0], "values")
+        return int(values[0]), str(values[1]), str(values[2]), str(values[3])
+
     def _get_selected_task_id(self) -> int | None:
         selection = self.tree.selection()
         if not selection:
@@ -194,6 +208,54 @@ class VibeFlowApp:
             return None
         values = self.tree.item(selection[0], "values")
         return int(values[0])
+
+    def edit_selected_task(self) -> None:
+        selected = self._get_selected_task_values()
+        if selected is None:
+            return
+        task_id, current_title, current_course, current_due_date = selected
+
+        dialog = tk.Toplevel(self.root)
+        dialog.title("编辑任务")
+        dialog.geometry("420x220")
+        dialog.resizable(False, False)
+        dialog.transient(self.root)
+        dialog.grab_set()
+
+        frame = ttk.Frame(dialog, padding=16)
+        frame.pack(fill=tk.BOTH, expand=True)
+
+        ttk.Label(frame, text="任务标题").pack(anchor=tk.W)
+        title_var = tk.StringVar(value=current_title)
+        ttk.Entry(frame, textvariable=title_var, width=48).pack(fill=tk.X, pady=(0, 8))
+
+        ttk.Label(frame, text="所属课程").pack(anchor=tk.W)
+        course_var = tk.StringVar(value=current_course)
+        ttk.Entry(frame, textvariable=course_var, width=48).pack(fill=tk.X, pady=(0, 8))
+
+        ttk.Label(frame, text="截止日期（YYYY-MM-DD）").pack(anchor=tk.W)
+        due_date_var = tk.StringVar(value=current_due_date)
+        ttk.Entry(frame, textvariable=due_date_var, width=48).pack(fill=tk.X, pady=(0, 12))
+
+        btn_frame = ttk.Frame(frame)
+        btn_frame.pack()
+
+        def save() -> None:
+            try:
+                self.service.update_task(
+                    task_id,
+                    title_var.get(),
+                    course_var.get(),
+                    due_date_var.get(),
+                )
+            except ValueError as exc:
+                messagebox.showerror("编辑失败", str(exc))
+                return
+            dialog.destroy()
+            self.refresh_tasks()
+
+        ttk.Button(btn_frame, text="保存", command=save).pack(side=tk.LEFT, padx=(0, 8))
+        ttk.Button(btn_frame, text="取消", command=dialog.destroy).pack(side=tk.LEFT)
 
     def toggle_selected_task(self) -> None:
         task_id = self._get_selected_task_id()

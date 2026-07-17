@@ -66,6 +66,16 @@ class TaskRepository:
             rows = connection.execute(query, tuple(params)).fetchall()
         return [self._row_to_task(row) for row in rows]
 
+    def update(self, task_id: int, title: str, course: str, due_date: str) -> Task:
+        with self._connect() as connection:
+            cursor = connection.execute(
+                "UPDATE tasks SET title = ?, course = ?, due_date = ? WHERE id = ?",
+                (title, course, due_date, task_id),
+            )
+            if cursor.rowcount == 0:
+                raise ValueError(f"任务不存在：{task_id}")
+        return self.get(task_id)
+
     def update_status(self, task_id: int, status: str) -> Task:
         with self._connect() as connection:
             cursor = connection.execute(

@@ -59,3 +59,27 @@ def test_delete_task(service: TaskService) -> None:
     service.delete_task(task.id)
 
     assert service.list_tasks() == []
+
+
+def test_update_task(service: TaskService) -> None:
+    task = service.create_task("原始标题", "原始课程", "2026-07-20")
+
+    updated = service.update_task(task.id, "修改后的标题", "新课程", "2026-08-01")
+
+    assert updated.title == "修改后的标题"
+    assert updated.course == "新课程"
+    assert updated.due_date == "2026-08-01"
+
+
+def test_update_task_title_cannot_be_empty(service: TaskService) -> None:
+    task = service.create_task("原始标题")
+
+    with pytest.raises(ValueError, match="任务标题不能为空"):
+        service.update_task(task.id, "   ")
+
+
+def test_update_task_date_validation(service: TaskService) -> None:
+    task = service.create_task("原始标题")
+
+    with pytest.raises(ValueError, match="YYYY-MM-DD"):
+        service.update_task(task.id, "新标题", due_date="invalid")
