@@ -14,8 +14,8 @@ V0.1 MVP
 
 ## 架构约束
 - UI 只负责展示和接收输入。
-- 数据库操作集中在 `app/db.py`。
-- 业务逻辑集中在 `app/services.py`。
+- 数据库操作集中在 `vibeflow/db.py`。
+- 业务逻辑集中在 `vibeflow/services.py`。
 - 不要在 UI 文件里直接拼接 SQL。
 - 新功能必须尽量补充单元测试。
 - 修改前先阅读相关文件，不要无关重构。

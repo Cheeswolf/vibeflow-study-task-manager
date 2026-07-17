@@ -12,7 +12,7 @@ cd xxx-project
 .venv\Scripts\activate
 
 # 现在所有 python/pip/pytest 都自动走这个项目的环境
-python -m app.main
+python -m vibeflow.main
 pip install xxx
 pytest
 ```

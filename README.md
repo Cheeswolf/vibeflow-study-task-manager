@@ -11,6 +11,8 @@
 - 删除任务
 - 查看任务统计
 - SQLite 本地持久化
+- 本地 Markdown / TXT 知识库检索
+- 命令行交互式搜索
 - 基础单元测试
 
 ## 运行环境
@@ -55,6 +57,16 @@ git commit -m "feat: add task editing"
 git checkout main
 git merge feat/task-editing
 ```
+
+## 知识检索
+
+将 Markdown（`.md`）或纯文本（`.txt`）文件放入 `knowledge/` 目录，然后启动交互式检索：
+
+```bash
+python -m vibeflow.search_cli
+```
+
+输入中文或英文关键词进行搜索，最多返回 3 条结果，按相关度排序。输入 `/q` 退出。
 
 ## 下一阶段建议
 
