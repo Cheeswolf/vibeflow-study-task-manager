@@ -1,11 +1,22 @@
 from __future__ import annotations
 
+import argparse
+
 from vibeflow.knowledge_service import KnowledgeService
 
 
 def main() -> None:
-    service = KnowledgeService("knowledge")
-    print("VibeFlow 知识检索（输入 /q 退出）\n")
+    parser = argparse.ArgumentParser(description="VibeFlow 知识检索")
+    parser.add_argument(
+        "--mode",
+        choices=["keyword", "vector", "hybrid"],
+        default="keyword",
+        help="检索模式：keyword（关键词）、vector（向量语义）、hybrid（混合）。默认：keyword",
+    )
+    args = parser.parse_args()
+
+    service = KnowledgeService("knowledge", mode=args.mode)
+    print(f"VibeFlow 知识检索（模式：{args.mode}，输入 /q 退出）\n")
 
     while True:
         try:

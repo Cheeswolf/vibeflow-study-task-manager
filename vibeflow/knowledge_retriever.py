@@ -15,13 +15,23 @@ _CN_STOP_WORDS = set(
 _WORD_PATTERN = re.compile(r"[a-zA-Z0-9]{2,}")
 
 
-class KnowledgeRetriever:
+class KeywordRetriever:
+    """关键词检索器。
 
-    _RESULT_LIMIT = 3
+    通过中文分词（1-gram + 2-gram）和英文单词匹配进行检索，
+    使用加权关键词长度平方 / 对数长度归一化计算得分。
+    """
+
+    _DEFAULT_RESULT_LIMIT = 3
 
     def search(
-        self, chunks: list[TextChunk], query: str
+        self,
+        chunks: list[TextChunk],
+        query: str,
+        top_k: int | None = None,
     ) -> list[SearchResult]:
+        limit = top_k if top_k is not None else self._DEFAULT_RESULT_LIMIT
+
         if not chunks:
             return []
 
@@ -44,7 +54,7 @@ class KnowledgeRetriever:
                 )
 
         scored.sort(key=lambda r: (-r.score, r.chunk_index))
-        return scored[: self._RESULT_LIMIT]
+        return scored[:limit]
 
     def _tokenize(self, query: str) -> set[str]:
         query = query.strip()
@@ -87,3 +97,7 @@ class KnowledgeRetriever:
 
         denominator = math.log(len(chunk) + math.e)
         return numerator / denominator
+
+
+# 向后兼容别名
+KnowledgeRetriever = KeywordRetriever

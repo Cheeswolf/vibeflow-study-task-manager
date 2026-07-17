@@ -63,10 +63,27 @@ git merge feat/task-editing
 将 Markdown（`.md`）或纯文本（`.txt`）文件放入 `knowledge/` 目录，然后启动交互式检索：
 
 ```bash
-python -m vibeflow.search_cli
+# 关键词检索（默认，无需额外依赖）
+python -m vibeflow.search_cli --mode keyword
+
+# 向量语义检索（首次运行自动下载嵌入模型约 420 MB）
+python -m vibeflow.search_cli --mode vector
+
+# 混合检索（综合关键词 + 向量）
+python -m vibeflow.search_cli --mode hybrid
 ```
 
+- **keyword**：中文分词 + 英文单词匹配，按关键词匹配度评分
+- **vector**：使用多语言嵌入模型进行语义相似度检索
+- **hybrid**：加权融合关键词得分和向量相似度得分（默认 keyword=0.3, vector=0.7）
+
 输入中文或英文关键词进行搜索，最多返回 3 条结果，按相关度排序。输入 `/q` 退出。
+
+### 安装向量检索依赖
+
+```bash
+pip install sentence-transformers
+```
 
 ## 下一阶段建议
 
