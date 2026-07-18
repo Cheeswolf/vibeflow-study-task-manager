@@ -2,276 +2,200 @@
 
 一个用于练习 Vibe Coding 工程化开发流程的 Python 桌面项目。
 
-## 当前功能
+## 项目结构
 
-- 添加学习任务
-- 填写所属课程和截止日期
-- 查看全部、待完成、已完成任务
-- 切换完成状态
-- 删除任务
-- 查看任务统计
-- SQLite 本地持久化
-- 本地 Markdown / TXT 知识库检索
-- 命令行交互式搜索
-- 基础单元测试
-
-## 运行环境
-
-- Python 3.10 或更高版本
-- Tkinter（通常随 Python 自带）
-- pytest（仅测试需要）
-
-## 启动项目
-
-```bash
-python -m vibeflow.main
+```
+VibeFlow
+├── 学习任务管理
+│   ├── vibeflow/main.py              Tkinter 桌面 GUI
+│   ├── vibeflow/models.py            数据模型（Task）
+│   ├── vibeflow/db.py                SQLite 数据库操作
+│   └── vibeflow/services.py          业务逻辑
+│
+├── 本地知识库
+│   └── knowledge/                    Markdown / TXT 知识文档
+│       ├── vibe-coding.md
+│       ├── claude-code.md
+│       └── git-notes.md
+│
+├── 文档加载与文本切分
+│   ├── vibeflow/knowledge_loader.py   扫描 knowledge/ 目录
+│   ├── vibeflow/knowledge_chunker.py  文本切分
+│   └── vibeflow/knowledge_models.py   TextChunk, SearchResult
+│
+├── 关键词检索
+│   └── vibeflow/knowledge_retriever.py  KeywordRetriever（中文分词 + 英文匹配）
+│
+├── 向量检索
+│   ├── vibeflow/knowledge_embedder.py         嵌入模型封装（sentence-transformers）
+│   └── vibeflow/knowledge_vector_retriever.py  VectorRetriever（余弦相似度）
+│
+├── 混合检索
+│   └── vibeflow/knowledge_hybrid_retriever.py  HybridRetriever（加权融合 + 去重）
+│
+├── Ollama RAG 回答
+│   ├── vibeflow/knowledge_llm_client.py         LLMClient 接口 + OllamaClient
+│   ├── vibeflow/knowledge_context_builder.py    检索结果 → 带编号上下文
+│   ├── vibeflow/knowledge_prompt_builder.py     系统提示词 + 用户消息
+│   ├── vibeflow/knowledge_rag_service.py        RAGService 编排全链路
+│   ├── vibeflow/knowledge_rag_models.py         RAGResult, SourceInfo
+│   ├── vibeflow/knowledge_service.py            组合 Loader → Chunker → Retriever
+│   └── vibeflow/ask_cli.py                      交互式问答 CLI
+│
+├── 引用来源
+│   └── [S1] [S2] 标签 + 来源文件列表
+│
+├── RAG 评估集
+│   ├── evaluation/rag_cases.json         18 条黄金案例（8 个类别）
+│   ├── vibeflow/evaluation/models.py     EvaluationCase, CaseResult, EvalReport
+│   ├── vibeflow/evaluation/scorer.py     确定性评分（不依赖 LLM 评判）
+│   ├── vibeflow/evaluation/runner.py     评估运行器 + ScriptedFakeLLM
+│   └── vibeflow/evaluate_rag.py          CLI 入口
+│
+├── 并发压力测试
+│   ├── vibeflow/load_test.py             ThreadPoolExecutor 并发压测
+│   └── 指标：成功率、吞吐量、P50/P95/P99、异常分布
+│
+├── 单元测试
+│   ├── tests/test_services.py            任务管理测试
+│   ├── tests/test_knowledge.py           知识检索测试
+│   ├── tests/test_rag.py                 RAG 服务测试
+│   ├── tests/test_vector_retriever.py    向量检索测试
+│   ├── tests/test_evaluation.py          评估体系测试（68 条）
+│   ├── tests/test_load_test.py           压力测试测试（34 条）
+│   └── tests/test_safety_guard.py        Hook 安全测试
+│
+└── Claude Code 工程化体系
+    ├── CLAUDE.md                    项目规范与架构约束（AI 自动遵循）
+    ├── .claude/skills/unit-test/    单元测试 Skill（/unit-test）
+    ├── .claude/agents/test-expert.md      测试专家 Subagent（@test-expert）
+    ├── .claude/agents/quality-engineer.md 质量工程师 Subagent（@quality-engineer）
+    └── .claude/hooks/safety_guard.py      PreToolUse 安全 Hook（拦截危险命令）
 ```
 
-## 运行测试
+## 快速开始
 
 ```bash
-python -m pip install -r requirements-dev.txt
+# 启动桌面 GUI
+python -m vibeflow.main
+
+# 运行全部测试（286 条）
 pytest
 ```
 
-## 推荐 Git 流程
+## 学习任务管理
 
-```bash
-git init
-git add .
-git commit -m "feat: initialize VibeFlow MVP"
-git branch -M main
-```
+桌面 GUI 应用，支持添加、筛选、完成、删除学习任务，SQLite 本地持久化。
 
-开发新功能时：
-
-```bash
-git checkout -b feat/task-editing
-```
-
-功能完成并测试后：
-
-```bash
-git add .
-git commit -m "feat: add task editing"
-git checkout main
-git merge feat/task-editing
-```
+| 功能 | 说明 |
+|------|------|
+| 新建任务 | 填写标题、课程、截止日期 |
+| 任务列表 | 查看全部 / 待完成 / 已完成 |
+| 状态切换 | 标记完成 / 未完成 |
+| 删除任务 | 移除任务记录 |
+| 任务统计 | 完成率概览 |
 
 ## 知识检索
 
-将 Markdown（`.md`）或纯文本（`.txt`）文件放入 `knowledge/` 目录，然后启动交互式检索：
-
 ```bash
-# 关键词检索（默认，无需额外依赖）
+# 关键词检索（默认）
 python -m vibeflow.search_cli --mode keyword
 
-# 向量语义检索（首次运行自动下载嵌入模型约 420 MB）
+# 向量语义检索（首次自动下载模型约 420 MB）
 python -m vibeflow.search_cli --mode vector
 
-# 混合检索（综合关键词 + 向量）
+# 混合检索（关键词 + 向量加权融合）
 python -m vibeflow.search_cli --mode hybrid
 ```
 
-- **keyword**：中文分词 + 英文单词匹配，按关键词匹配度评分
-- **vector**：使用多语言嵌入模型进行语义相似度检索
-- **hybrid**：加权融合关键词得分和向量相似度得分（默认 keyword=0.3, vector=0.7）
+三种检索器统一接口 `search(chunks, query, top_k) → list[SearchResult]`，通过 `KnowledgeService(mode=...)` 切换。
 
-输入中文或英文关键词进行搜索，最多返回 3 条结果，按相关度排序。输入 `/q` 退出。
-
-### 安装向量检索依赖
-
-```bash
-pip install sentence-transformers
-```
-
-## 知识库问答（RAG）
-
-将 Markdown / TXT 文件放入 `knowledge/` 目录，启动交互式问答：
+## RAG 知识库问答
 
 ```bash
 # 安装依赖
-pip install ollama
+pip install ollama sentence-transformers
 
-# 确认 Ollama 正在运行
-ollama list
-
-# 启动问答 CLI（默认使用混合检索）
+# 启动问答（默认混合检索）
 python -m vibeflow.ask_cli
 
 # 指定检索模式
 python -m vibeflow.ask_cli --mode keyword
-python -m vibeflow.ask_cli --mode vector
 python -m vibeflow.ask_cli --mode hybrid
 ```
 
-输入问题后，系统自动检索知识库，调用本地 Ollama 生成基于检索资料、带引用来源的回答。
+### 处理流程
 
-### RAG 回答流程
+1. 接收用户问题 → 2. 检索相关文本块 → 3. 判断相关性 → 4. 构造带编号上下文 → 5. 生成受约束提示词 → 6. 调用本地 Ollama 生成回答 → 7. 返回回答 + `[SN]` 引用来源
 
-1. 接收用户问题
-2. 使用检索器获取相关文本块
-3. 判断检索结果是否达到最低相关性要求
-4. 将文本块整理成带编号的上下文
-5. 构造受约束的提示词（只能依据知识库资料回答）
-6. 调用本地 Ollama 大模型生成回答
-7. 返回回答和引用来源
+### 资料不足时的行为
+
+系统在以下情况不会调用模型，避免编造信息：
+- 问题为空 → 提示输入问题
+- 无匹配结果 → "当前知识库中没有找到足够相关的资料"
+- 相关性过低 → "当前知识库无法支持完整回答"
 
 ### 配置模型
 
 ```bash
-# 设置模型名称（Windows CMD）
-set VIBEFLOW_OLLAMA_MODEL=qwen3:latest
-
-# 或 PowerShell
-$env:VIBEFLOW_OLLAMA_MODEL="qwen3:latest"
-
-# 或 Bash
-export VIBEFLOW_OLLAMA_MODEL=qwen3:latest
+export VIBEFLOW_OLLAMA_MODEL=qwen3:latest   # 未设置时自动探测
 ```
-
-如未设置，系统会自动探测已安装的模型。
-
-### 确认 Ollama 正在运行
-
-```bash
-# 检查 Ollama 服务
-ollama list
-
-# 如未运行，启动服务
-ollama serve
-```
-
-### 资料不足时的行为
-
-系统在以下情况不会调用模型：
-- 问题为空 → 提示输入问题
-- 知识库无匹配结果 → 「当前知识库中没有找到足够相关的资料」
-- 检索结果相关性过低 → 「当前知识库无法支持完整回答」
-
-这避免了模型在没有可靠资料时编造信息。
-
-### 当前局限
-
-- 不支持跨文档推理（每次只基于单个文本块判断相关性）
-- 上下文窗口受限于文本块数量和字符数（最多 5 块，总计约 3000 字符）
-- 不精确计算 token 数，以字符数近似控制
-- 需要本地运行 Ollama，首次使用需下载模型
-- 不支持多轮对话，每次提问独立处理
 
 ## RAG 评估体系
 
-项目包含一套可重复运行的黄金评估集，用于系统性地验证 RAG 回答质量。
-
-### 评估集
-
-评估案例文件位于 `evaluation/rag_cases.json`，目前包含 **18 条案例**，覆盖 8 个类别：
-
-| 类别 | 说明 |
-|------|------|
-| 精确关键词问题 | 知识库中存在精确匹配的关键词 |
-| 同义表达问题 | 用不同表达方式描述同一概念 |
-| 多文档综合问题 | 需要跨文档的信息 |
-| 资料不足问题 | 知识库中没有相关内容，应拒答 |
-| 引用正确性问题 | 验证 [SN] 标签对应真实来源 |
-| 提示词注入问题 | 问题中嵌入恶意指令 |
-| 空输入或无效输入 | 空字符串、纯空白 |
-| 中英文混合问题 | 中英文混合查询 |
-
-### 评估指标
-
-每条案例评估以下维度：
-
-- **来源命中**：预期来源文件是否出现在检索结果中
-- **引用有效**：回答中的 `[SN]` 是否对应实际提供的来源
-- **关键词覆盖**：预期关键词在回答中的命中率
-- **禁止词检查**：回答是否出现不应有的内容
-- **拒答准确**：资料不足时是否正确拒答
-
-评估总报告包含：通过率、来源命中率、引用有效率、拒答准确率、平均关键词覆盖率、模型调用错误率、平均/P50/P95 响应时间。
-
-### 运行评估
+18 条黄金案例，8 个类别，确定性评分（不依赖 LLM 评判）。
 
 ```bash
-# Fake 模式（默认，不连接真实模型，结果可重复）
-python -m vibeflow.evaluate_rag
-
-# Fake 模式 + 限制案例数
-python -m vibeflow.evaluate_rag --limit 5
-
-# 按类别过滤
-python -m vibeflow.evaluate_rag --category "资料不足问题"
-
-# 保存 JSON 报告
-python -m vibeflow.evaluate_rag --output eval_results/result.json
-
-# 真实 Ollama 模式（需 Ollama 运行中）
-python -m vibeflow.evaluate_rag --mode ollama
+python -m vibeflow.evaluate_rag                     # Fake 模式（可重复）
+python -m vibeflow.evaluate_rag --mode ollama        # 真实 Ollama
+python -m vibeflow.evaluate_rag --limit 5            # 限制数量
+python -m vibeflow.evaluate_rag --category "资料不足问题"  # 按类别
+python -m vibeflow.evaluate_rag --output eval_results/result.json  # 保存报告
 ```
 
-### 查看失败案例
+### 评分维度
 
-终端输出会列出每条失败案例的 `case_id`、问题和具体失败原因。JSON 报告（`--output`）包含完整明细。
-
-### 评估方法的局限
-
-- Fake 模式下 LLM 返回预设回答，无法评估真实生成质量
-- 关键词覆盖使用简单字符串匹配，不理解同义词
-- 来源命中依赖文件名匹配，不检查内容语义是否正确
-- 拒答判断依赖固定文案标记（「没有找到」「相关度过低」等）
-- 仅在 keyword 检索模式下测试，vector/hybrid 需加载真实模型
+| 维度 | 说明 |
+|------|------|
+| 来源命中 | expected_sources 是否出现在检索结果中 |
+| 引用有效 | [SN] 标签是否对应真实来源 |
+| 关键词覆盖 | expected_keywords 命中率 ≥ 50% |
+| 禁止词 | forbidden_keywords 是否出现 |
+| 拒答准确 | 资料不足时是否正确拒答 |
 
 ## 并发压力测试
 
-一个基于 Python 标准库 `concurrent.futures` 的压力测试工具，不依赖外部服务框架。
-
-### 运行压力测试
+基于 `concurrent.futures`，每个请求独立创建 RAGService，无状态串扰。
 
 ```bash
-# Fake 模式（默认，20 请求，并发 2）
-python -m vibeflow.load_test
-
-# 自定义并发参数
-python -m vibeflow.load_test --concurrency 5 --requests 50
-
-# 设置单请求超时
-python -m vibeflow.load_test --timeout 10
-
-# 本地 Ollama 小规模压力（需显式开启）
-python -m vibeflow.load_test --mode ollama --requests 5 --concurrency 1
-
-# 模拟 30% 模型异常率
-python -m vibeflow.load_test --error-rate 0.3
-
-# 保存 JSON 报告
-python -m vibeflow.load_test --output load_results/report.json
+python -m vibeflow.load_test                               # 默认（Fake, 20 请求, 并发 2）
+python -m vibeflow.load_test --concurrency 5 --requests 50  # 高并发
+python -m vibeflow.load_test --mode ollama --requests 5 --concurrency 1  # Ollama
+python -m vibeflow.load_test --error-rate 0.3               # 模拟 30% 异常
+python -m vibeflow.load_test --output load_results/report.json  # 保存报告
 ```
 
-### 压力测试指标
+### 指标
 
-| 指标 | 说明 |
+成功率、吞吐量、min/avg/P50/P95/P99/max 响应时间、异常分布。
+
+## V1.0 Ollama 评估基线
+
+| 指标 | 数值 |
 |------|------|
-| 成功率 | 成功请求 / 总请求 |
-| 吞吐量 | 每秒完成的请求数 |
-| 最小/平均/最大 | 响应时间的最值 |
-| P50 | 50% 请求的响应时间不超过此值 |
-| P95 | 95% 请求的响应时间不超过此值 |
-| P99 | 99% 请求的响应时间不超过此值 |
-| 异常分布 | 各类型异常的出现次数 |
+| 模型 | qwen2.5:1.5b |
+| 通过率 | 66.7%（12/18） |
+| 来源命中率 | 100.0% |
+| 引用有效率 | 100.0% |
+| 拒答准确率 | 100.0% |
+| 平均响应时间 | 1425.9 ms |
 
-### 设计说明
+## 技术栈
 
-- **每个请求创建独立的 RAGService**，避免状态串扰（来源编号、上下文、错误状态）
-- Fake 模式下不访问网络，可在 pytest 中安全执行
-- Ollama 模式仅限手动 CLI 运行，pytest 中禁止
-- 单个请求异常不会导致整个压力测试中断
+Python 3.10+ · Tkinter · SQLite · pytest · sentence-transformers · Ollama
 
-## 下一阶段建议
+## 禁止行为
 
-1. 增加任务编辑功能
-2. 增加逾期任务提示
-3. 增加按课程筛选
-4. 增加数据导出
-5. 建立测试 Skill
-6. 建立代码审查 Subagent
-7. 添加危险命令 Hook
+- 使用云端 API
+- 自动化测试依赖真实 Ollama
+- eval_results/ 和 load_results/ 纳入版本控制
