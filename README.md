@@ -159,6 +159,113 @@ ollama serve
 - 需要本地运行 Ollama，首次使用需下载模型
 - 不支持多轮对话，每次提问独立处理
 
+## RAG 评估体系
+
+项目包含一套可重复运行的黄金评估集，用于系统性地验证 RAG 回答质量。
+
+### 评估集
+
+评估案例文件位于 `evaluation/rag_cases.json`，目前包含 **18 条案例**，覆盖 8 个类别：
+
+| 类别 | 说明 |
+|------|------|
+| 精确关键词问题 | 知识库中存在精确匹配的关键词 |
+| 同义表达问题 | 用不同表达方式描述同一概念 |
+| 多文档综合问题 | 需要跨文档的信息 |
+| 资料不足问题 | 知识库中没有相关内容，应拒答 |
+| 引用正确性问题 | 验证 [SN] 标签对应真实来源 |
+| 提示词注入问题 | 问题中嵌入恶意指令 |
+| 空输入或无效输入 | 空字符串、纯空白 |
+| 中英文混合问题 | 中英文混合查询 |
+
+### 评估指标
+
+每条案例评估以下维度：
+
+- **来源命中**：预期来源文件是否出现在检索结果中
+- **引用有效**：回答中的 `[SN]` 是否对应实际提供的来源
+- **关键词覆盖**：预期关键词在回答中的命中率
+- **禁止词检查**：回答是否出现不应有的内容
+- **拒答准确**：资料不足时是否正确拒答
+
+评估总报告包含：通过率、来源命中率、引用有效率、拒答准确率、平均关键词覆盖率、模型调用错误率、平均/P50/P95 响应时间。
+
+### 运行评估
+
+```bash
+# Fake 模式（默认，不连接真实模型，结果可重复）
+python -m vibeflow.evaluate_rag
+
+# Fake 模式 + 限制案例数
+python -m vibeflow.evaluate_rag --limit 5
+
+# 按类别过滤
+python -m vibeflow.evaluate_rag --category "资料不足问题"
+
+# 保存 JSON 报告
+python -m vibeflow.evaluate_rag --output eval_results/result.json
+
+# 真实 Ollama 模式（需 Ollama 运行中）
+python -m vibeflow.evaluate_rag --mode ollama
+```
+
+### 查看失败案例
+
+终端输出会列出每条失败案例的 `case_id`、问题和具体失败原因。JSON 报告（`--output`）包含完整明细。
+
+### 评估方法的局限
+
+- Fake 模式下 LLM 返回预设回答，无法评估真实生成质量
+- 关键词覆盖使用简单字符串匹配，不理解同义词
+- 来源命中依赖文件名匹配，不检查内容语义是否正确
+- 拒答判断依赖固定文案标记（「没有找到」「相关度过低」等）
+- 仅在 keyword 检索模式下测试，vector/hybrid 需加载真实模型
+
+## 并发压力测试
+
+一个基于 Python 标准库 `concurrent.futures` 的压力测试工具，不依赖外部服务框架。
+
+### 运行压力测试
+
+```bash
+# Fake 模式（默认，20 请求，并发 2）
+python -m vibeflow.load_test
+
+# 自定义并发参数
+python -m vibeflow.load_test --concurrency 5 --requests 50
+
+# 设置单请求超时
+python -m vibeflow.load_test --timeout 10
+
+# 本地 Ollama 小规模压力（需显式开启）
+python -m vibeflow.load_test --mode ollama --requests 5 --concurrency 1
+
+# 模拟 30% 模型异常率
+python -m vibeflow.load_test --error-rate 0.3
+
+# 保存 JSON 报告
+python -m vibeflow.load_test --output load_results/report.json
+```
+
+### 压力测试指标
+
+| 指标 | 说明 |
+|------|------|
+| 成功率 | 成功请求 / 总请求 |
+| 吞吐量 | 每秒完成的请求数 |
+| 最小/平均/最大 | 响应时间的最值 |
+| P50 | 50% 请求的响应时间不超过此值 |
+| P95 | 95% 请求的响应时间不超过此值 |
+| P99 | 99% 请求的响应时间不超过此值 |
+| 异常分布 | 各类型异常的出现次数 |
+
+### 设计说明
+
+- **每个请求创建独立的 RAGService**，避免状态串扰（来源编号、上下文、错误状态）
+- Fake 模式下不访问网络，可在 pytest 中安全执行
+- Ollama 模式仅限手动 CLI 运行，pytest 中禁止
+- 单个请求异常不会导致整个压力测试中断
+
 ## 下一阶段建议
 
 1. 增加任务编辑功能

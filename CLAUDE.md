@@ -51,6 +51,35 @@ LLM 客户端统一接口：`generate(messages) -> str`
 - 服务地址：环境变量 `VIBEFLOW_OLLAMA_HOST`，默认 `http://localhost:11434`
 - 客户端延迟初始化，import 时不连接 Ollama
 
+## 评估体系
+- `evaluation/rag_cases.json` — 黄金评估数据集（18 条案例，8 个类别）
+- `vibeflow/evaluation/models.py` — 数据模型（EvaluationCase, CaseResult, EvalReport）
+- `vibeflow/evaluation/scorer.py` — 确定性评分规则（不依赖 LLM 评判）
+- `vibeflow/evaluation/runner.py` — 评估运行器（支持 fake/ollama 模式）
+- `vibeflow/evaluate_rag.py` — CLI 入口，只负责交互，业务委托给 runner
+
+评估规则：
+- 来源命中：expected_sources 至少一个出现在 actual_sources
+- 引用有效：回答中所有 [SN] 标签对应实际来源列表的合法索引
+- 关键词覆盖：expected_keywords 在回答中的简单字符串命中率（≥50% 通过）
+- 禁止词：forbidden_keywords 命中则失败
+- 拒答判断：should_answer=false 时验证系统明确拒答
+- 所有规则基于可解释的字符串匹配，不调用 LLM 评判
+
+自动化测试强制使用 FakeLLMClient，禁止在 pytest 中连接真实 Ollama。
+
+## 并发压力测试
+- `vibeflow/load_test.py` — 并发压力测试工具（基于 concurrent.futures）
+- 支持：并发数、总请求数、超时、Fake/Ollama 模式、异常率配置
+- 指标：成功率、吞吐量、min/avg/P50/P95/P99/max 响应时间、异常分布
+- 每个请求创建独立 RAGService，避免状态串扰
+- pytest 中禁止运行真实 Ollama 压力测试
+
+## 禁止行为
+- 不得使用云端 API
+- 不得让自动化测试依赖真实 Ollama
+- 评估输出目录 eval_results/ 和 load_results/ 不纳入版本控制
+
 ## MVP 功能
 - 新建学习任务
 - 展示任务列表
