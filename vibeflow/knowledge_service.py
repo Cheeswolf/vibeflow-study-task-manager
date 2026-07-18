@@ -60,6 +60,10 @@ class KnowledgeService:
         self._mode = mode
         self._chunks = self._build_index()
 
+    @property
+    def mode(self) -> str:
+        return self._mode
+
     def _build_index(self) -> list:
         from vibeflow.knowledge_models import TextChunk
 
@@ -72,5 +76,5 @@ class KnowledgeService:
 
         return all_chunks
 
-    def search(self, query: str) -> list:
-        return self._retriever.search(self._chunks, query)
+    def search(self, query: str, top_k: int | None = None) -> list:
+        return self._retriever.search(self._chunks, query, top_k=top_k)

@@ -12,6 +12,7 @@ V0.1 MVP
 - SQLite
 - pytest
 - sentence-transformers（向量检索）
+- ollama（本地大模型 RAG 回答）
 
 ## 架构约束
 - UI 只负责展示和接收输入。
@@ -34,6 +35,21 @@ V0.1 MVP
 - `search_cli.py` — CLI 入口，只负责交互，业务委托给 Service
 
 检索器统一接口：`search(chunks, query, top_k=None) → list[SearchResult]`
+
+## RAG 回答架构
+- `knowledge_rag_models.py` — 共享数据模型（RAGResult, SourceInfo）
+- `knowledge_llm_client.py` — LLMClient 抽象接口 + OllamaClient 实现
+- `knowledge_context_builder.py` — ContextBuilder 检索结果 → 带编号上下文
+- `knowledge_prompt_builder.py` — PromptBuilder 系统提示词 + 用户消息
+- `knowledge_rag_service.py` — RAGService 编排检索 → 上下文 → 生成全链路
+- `ask_cli.py` — CLI 问答入口，只负责交互，业务委托给 RAGService
+
+LLM 客户端统一接口：`generate(messages) -> str`
+
+配置方式：
+- 默认模型：环境变量 `VIBEFLOW_OLLAMA_MODEL`，未设置时自动探测
+- 服务地址：环境变量 `VIBEFLOW_OLLAMA_HOST`，默认 `http://localhost:11434`
+- 客户端延迟初始化，import 时不连接 Ollama
 
 ## MVP 功能
 - 新建学习任务
